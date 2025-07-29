@@ -1,5 +1,5 @@
-import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 public class GameController {
 
@@ -9,6 +9,8 @@ public class GameController {
     private String[] shipNames = new String[]{"Mayflower", "USS Constitution", "Titanic", "Spirit", "Odyssey"};
 
     private ArrayList<Ship> allShips = new ArrayList<>();
+
+    private Scanner playerInput = new Scanner(System.in);
 
     public GameController() {}
 
@@ -43,8 +45,8 @@ public class GameController {
         return new Ship(shipName, shipPositions);
     }
 
-    public void initializeGame() {
-        while (this.allShips.size() < 10) {
+    private void initializeGame() {
+        while (this.allShips.size() < 3) {
             Ship newShip = generateShip();
             boolean isSpawnable = true;
 
@@ -68,6 +70,60 @@ public class GameController {
         }
     }
 
+    private ArrayList<Integer> takePlayerGuess() {
+        String playerGuess = this.playerInput.nextLine();
+        while (playerGuess.split(" ").length != 2) {
+            System.out.println("Incorrect notation of ship coordinates. Correct example: '2 2' or '1 9'");
+            playerGuess = this.playerInput.nextLine();
+        }
+
+        int x_guess = Integer.parseInt(playerGuess.split(" ")[0]);
+        int y_guess = Integer.parseInt(playerGuess.split(" ")[1]);
+
+        ArrayList<Integer> parsedPlayerGuess = new ArrayList<>();
+        parsedPlayerGuess.add(x_guess);
+        parsedPlayerGuess.add(y_guess);
+
+        return parsedPlayerGuess;
+    }
+
+    private void processPlayerGuess(ArrayList<Integer> playerGuess) {
+        boolean hasHit = false;
+        for (Ship ship : this.allShips) {
+            for (ArrayList<Integer> shipCoordinates : ship.getPosition()) {
+                if (playerGuess.equals(shipCoordinates)) {
+                    System.out.println("Ship has been hit!");
+
+                    ArrayList<ArrayList<Integer>> updatedShipPosition = ship.getPosition();
+                    updatedShipPosition.remove(playerGuess);
+                    ship.setPosition(updatedShipPosition);
+
+                    if(updatedShipPosition.isEmpty()) {
+                        this.allShips.remove(ship);
+                        System.out.println("Ship with name: " + ship.getName() + " has been destroyed!");
+                    }
+                    hasHit = true;
+                    break;
+                }
+            }
+            if(hasHit) break;
+        }
+        if (!hasHit) System.out.println("Shot did not hit any ship");
+    }
+
+    public void playGame() {
+        int playerGuessCounter = 0;
+        this.initializeGame();
+
+        while(!this.allShips.isEmpty()) {
+            ArrayList<Integer> playerGuess = takePlayerGuess();
+            processPlayerGuess(playerGuess);
+            playerGuessCounter++;
+        }
+        System.out.println("Congratulation! You have won in " + playerGuessCounter + " turns!");
+    }
+
+    // getters/setters
     public ArrayList<Ship> getAllShips() {
         return allShips;
     }
